@@ -22,3 +22,5 @@ LONDON_AREAS = [
     "Camden, London",
     "Islington, London"
 ]
+
+DB_URL = "postgresql://postgres:postgress@localhost:5432/smart-city-db"

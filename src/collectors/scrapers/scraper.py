@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
 from config import HEADLESS, BASE_URL, SELECTORS
 from typing import List
+from .models import ScrapedItem
 
 
 class PropertyScraper:
@@ -46,8 +47,6 @@ class PropertyScraper:
         page.keyboard.press("Enter")
 
     def _collect_listing_urls(self, page) -> List[str]:
-        listing_urls = []
-
         current_page = 1
         while True:
             page_urls = []
@@ -87,26 +86,15 @@ class PropertyScraper:
         return page_urls
 
     def _scrape_detail_page(self, page, soup: BeautifulSoup, location: str):
-        listing_item = {
-            "url": page.url,
-            "title": None,
-            "address": None,
-            "price": None,
-            "description": None,
-            "bedrooms": None,
-            "bathrooms": None,
-            "receptions": None,
-            "epc_rating": None,
-            "image_url": None,
-            "tags": []
-        }
+        scraped_item = ScrapedItem()
+
+        # TODO: Extract the rest of the properties
 
         address_element = soup.select_one(SELECTORS['address'])
         if address_element:
-            listing_item['address'] = address_element.get_text(strip=True)
+            scraped_item.address = address_element.get_text(strip=True)
 
-
-        return listing_item
+        return scraped_item
 
     def _scrape_listings(self, page, listing_urls: List[str], location: str):
         scraped_items = []
@@ -129,7 +117,6 @@ class PropertyScraper:
             self.browser = pw.chromium.launch(headless=self.headless)
 
             page = self._create_page()
-            scraped_items = []
 
             # Search for the location
             self._search_location(location)
@@ -138,3 +125,6 @@ class PropertyScraper:
             urls = self._collect_listing_urls(page)
 
             # Scrape the listings
+            scraped_items = self._scrape_listings(page, listing_urls=urls, location=location)
+
+            return scraped_items
